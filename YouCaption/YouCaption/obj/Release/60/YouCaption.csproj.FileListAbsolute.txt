@@ -1,0 +1,3 @@
+D:\Workspace\Projects\Common\YouCaption\YouCaption\YouCaption\obj\Release\60\MonoAndroid,Version=v6.0.AssemblyAttributes.cs
+D:\Workspace\Projects\Common\YouCaption\YouCaption\YouCaption\obj\Release\60\build.props
+D:\Workspace\Projects\Common\YouCaption\YouCaption\YouCaption\obj\Release\60\adb.props

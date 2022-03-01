@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="YouCaptionBase.Views.MainPage"
+             xmlns:vm="clr-namespace:YouCaptionBase.ViewModels"
+             xmlns:conv="clr-namespace:YouCaptionBase.Converters"
+             xmlns:srv ="clr-namespace:YouCaptionBase.Services"
+             Title="{Binding Title}">
+
+    <ContentPage.BindingContext>
+        <vm:MainPageViewModel />
+    </ContentPage.BindingContext>
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <conv:ButtonTextConverter x:Key="ButtonTextConverter"/>
+            <conv:NegateBoolConverter x:Key="NegateBoolConverter"/>
+            <conv:DownloadButtonStateConverter x:Key="DownloadButtonStateConverter"/>
+            <conv:DownloadButtonTextConverter x:Key="DownloadButtonTextConverter"/>
+            <conv:BoolAnd x:Key="BoolAnd"/>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <StackLayout Orientation="Vertical" Spacing="0">
+            <ContentView Padding="5">
+                <Grid ColumnSpacing="0" BackgroundColor="{StaticResource EntryBackColor}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="90*"/>
+                        <ColumnDefinition Width="10*"/>
+                    </Grid.ColumnDefinitions>
+                    <Entry Grid.Column="0" Text="{Binding Link}" Placeholder="Enter youtube link here"/>
+                    <Button Style="{StaticResource SpecialButtonStyle}"
+                            Grid.Column="1"
+                            IsVisible="{Binding IsSearching, Converter={StaticResource NegateBoolConverter}, ConverterParameter={Binding IsSearching}}"
+                            Command="{Binding GetVideoInfoCommand}"
+                            Text="ᐅ" />
+                    <ActivityIndicator Grid.Column="1" IsVisible="{Binding IsSearching}" IsRunning="{Binding IsSearching}"/>
+                </Grid>
+            </ContentView>
+            <ContentView IsVisible="{Binding HasContent}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="240" />
+                    </Grid.RowDefinitions>
+                    <Image Grid.Row="0" Source="{Binding Thumbnail}" HorizontalOptions="Fill" Aspect="AspectFill" />
+                    <Grid RowSpacing="0" ColumnSpacing="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="15*" />
+                            <RowDefinition Height="8*" />
+                            <RowDefinition Height="77*" />
+                        </Grid.RowDefinitions>
+                        <BoxView Grid.Row="0" BackgroundColor="{StaticResource LabelBackColor}"/>
+                        <BoxView Grid.Row="1" BackgroundColor="{StaticResource LabelBackColor}"/>
+                        <Label Grid.Row="0" VerticalOptions="StartAndExpand" TextColor="{StaticResource TextColor}" Text="{Binding Pack.VideoInfo.Title}" Margin="10,0,0,0" FontSize="Title" LineBreakMode="TailTruncation"/>
+                        <Label Grid.Row="1" VerticalOptions="StartAndExpand" TextColor="{StaticResource TextColor}" Text="{Binding Pack.VideoInfo.Author.Title, StringFormat='By {0}'}" Margin="10,-5,0,0" FontSize="Small" LineBreakMode="TailTruncation"/>
+                        <Grid Grid.Row="2" RowSpacing="0" ColumnSpacing="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="75*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="5*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="80*"/>
+                                <RowDefinition Height="11*"/>
+                                <RowDefinition Height="10*"/>
+                            </Grid.RowDefinitions>
+                            <BoxView CornerRadius="5" Grid.Row="1" Grid.Column="1" BackgroundColor="{StaticResource LabelBackColor}"/>
+                            <Label Margin="5,0,5,0" Grid.Row="1" Grid.Column="1" HorizontalOptions="CenterAndExpand" VerticalOptions="Fill" TextColor="{StaticResource TextColor}" Text="{Binding DisplayDuration}"/>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </ContentView>
+        </StackLayout>
+        <ScrollView Grid.Row="1">
+            <StackLayout IsVisible="{Binding HasContent}" Orientation="Vertical" Padding="5" Spacing="10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="1*"/>
+                        <RowDefinition Height="1*"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="70*"/>
+                    </Grid.ColumnDefinitions>
+                    <Picker IsEnabled="{Binding IsReady}" Grid.Row="0" Grid.ColumnSpan="3" Title="Select video quality" SelectedItem="{Binding SelectedVideo}" ItemsSource="{Binding Videos}" ItemDisplayBinding="{Binding Title}"/>
+                    <CheckBox Grid.Row="1" IsChecked="{Binding BurnSubs}" Grid.Column="0">
+                        <CheckBox.IsEnabled>
+                            <MultiBinding Converter="{StaticResource BoolAnd}">
+                                <Binding Path="IsReady"/>
+                                <Binding Path="HasSubs"/>
+                            </MultiBinding>
+                        </CheckBox.IsEnabled>
+                    </CheckBox>
+                    <Label Grid.Row="1" Grid.Column="1" Text="Hardsubs" TextColor="{StaticResource TextColor}" VerticalOptions="CenterAndExpand" HorizontalOptions="StartAndExpand" FontSize="Medium"/>
+                    <Picker IsEnabled="{Binding IsReady}" Grid.Row="1" IsVisible="{Binding BurnSubs}" Grid.Column="2" Title="Select captions track" SelectedItem="{Binding SelectedCaption}" ItemsSource="{Binding Captions}" ItemDisplayBinding="{Binding Title}"/>
+                </Grid>
+                <Button Text="{Binding BurnSubs, Converter={StaticResource DownloadButtonTextConverter}}"  Command="{Binding StartVideoDownloadCommand}">
+                    <Button.IsVisible>
+                        <MultiBinding Converter="{StaticResource DownloadButtonStateConverter}">
+                            <Binding Path="SelectedVideo" />
+                            <Binding Path="SelectedCaption" />
+                            <Binding Path="BurnSubs"/>
+                            <Binding Path="IsReady"/>
+                        </MultiBinding>
+                    </Button.IsVisible>
+                </Button>
+                <Grid IsVisible="{Binding IsReady,Converter={StaticResource NegateBoolConverter}}" RowSpacing="1" Margin="10,0,10,0">
+                    <Label Grid.Column="0" Text="Processing..." FontAttributes="Bold"/>
+                    <Label Grid.Column="1" Grid.ColumnSpan="2" HorizontalTextAlignment="End" Text="{Binding DownloadProgressText}"/>
+                    <ProgressBar srv:AttachedProperties.AnimatedProgress="{Binding DownloadProgress}" Grid.Row="1" Grid.ColumnSpan="3" />
+                </Grid>
+            </StackLayout>
+        </ScrollView>
+    </Grid>
+
+</ContentPage>
